@@ -16,6 +16,12 @@
   z-index: 50;
   animation: cardFadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   opacity: 0;
+  user-select: none;
+}
+
+.player-card-wrapper.dragging {
+  z-index: 100;
+  opacity: 0.9;
 }
 
 @keyframes cardFadeIn {

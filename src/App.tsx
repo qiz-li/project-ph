@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { StreamContainer } from './components/stream/StreamContainer';
 import type { StreamContainerRef } from './components/stream/StreamContainer';
 import { PenaltyScoreOverlay } from './components/stream/PenaltyScoreOverlay';
@@ -102,11 +102,11 @@ const penaltyPlayers: Player[] = [
   },
 ];
 
-// Card positions on screen - positioned relative to players in video
-const cardPositions: Record<string, { top?: string; bottom?: string; left?: string; right?: string }> = {
-  'referee': { top: '120px', left: '24px' },
-  'penalty-taker': { bottom: '80px', left: '24px' },
-  'goalkeeper': { top: '180px', right: '24px' },
+// Initial card positions on screen
+const initialCardPositions: Record<string, { x: number; y: number }> = {
+  'referee': { x: 24, y: 120 },
+  'penalty-taker': { x: 24, y: 450 },
+  'goalkeeper': { x: 1100, y: 180 },
 };
 
 function App() {
@@ -114,8 +114,49 @@ function App() {
   const [duration, setDuration] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
+  const [cardPositions, setCardPositions] = useState(initialCardPositions);
+  const [dragging, setDragging] = useState<string | null>(null);
+  const dragOffset = useRef({ x: 0, y: 0 });
 
   const streamRef = useRef<StreamContainerRef>(null);
+
+  const handleMouseDown = (e: React.MouseEvent, playerId: string) => {
+    e.preventDefault();
+    const rect = (e.target as HTMLElement).closest('.player-card-wrapper')?.getBoundingClientRect();
+    if (rect) {
+      dragOffset.current = {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
+      };
+      setDragging(playerId);
+    }
+  };
+
+  useEffect(() => {
+    if (!dragging) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      setCardPositions((prev) => ({
+        ...prev,
+        [dragging]: {
+          x: e.clientX - dragOffset.current.x,
+          y: e.clientY - dragOffset.current.y,
+        },
+      }));
+    };
+
+    const handleMouseUp = () => {
+      setDragging(null);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [dragging]);
 
   const handleTimeUpdate = useCallback((time: number, dur: number) => {
     setCurrentTime(time);
@@ -173,11 +214,14 @@ function App() {
         {penaltyPlayers.map((player, index) => (
           <div
             key={player.id}
-            className="player-card-wrapper"
+            className={`player-card-wrapper ${dragging === player.id ? 'dragging' : ''}`}
             style={{
-              ...cardPositions[player.id],
+              left: cardPositions[player.id].x,
+              top: cardPositions[player.id].y,
               animationDelay: `${index * 100}ms`,
+              cursor: dragging === player.id ? 'grabbing' : 'grab',
             }}
+            onMouseDown={(e) => handleMouseDown(e, player.id)}
           >
             <PlayerCard
               player={player}
