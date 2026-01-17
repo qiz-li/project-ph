@@ -1,98 +1,48 @@
-/* App Layout */
+/* ═══════════════════════════════════════════════════════════════
+   APP LAYOUT - Liquid Glass Sports Streaming
+   ═══════════════════════════════════════════════════════════════ */
+
 .app {
   position: relative;
   width: 100%;
   min-height: 100vh;
   overflow: hidden;
-}
-
-/* Field Markers Container */
-.field-markers {
-  position: absolute;
-  inset: 10%;
-  pointer-events: auto;
+  background: #000;
 }
 
 /* Player Card Wrapper for Positioning */
 .player-card-wrapper {
   position: absolute;
   z-index: 50;
-  animation: fadeInScale 500ms ease forwards;
+  animation: cardFadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   opacity: 0;
 }
 
-/* Responsive Adjustments */
-@media (max-width: 1400px) {
-  .player-card-wrapper {
-    transform: scale(0.9);
+@keyframes cardFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
+/* Responsive Adjustments */
 @media (max-width: 1200px) {
   .player-card-wrapper {
-    transform: scale(0.85);
+    transform: scale(0.9);
+    transform-origin: bottom left;
   }
 
-  .video-controls {
-    min-width: 500px;
-  }
-}
-
-@media (max-width: 1024px) {
-  .player-card-wrapper {
-    display: none;
-  }
-
-  .sidebar {
-    left: var(--space-md);
-  }
-
-  .video-controls {
-    min-width: auto;
-    width: calc(100% - 160px);
-  }
-
-  .controls-center {
-    display: none;
+  .player-card-wrapper:nth-child(3) {
+    transform-origin: bottom right;
   }
 }
 
 @media (max-width: 768px) {
-  .top-nav {
-    width: calc(100% - var(--space-xl) * 2);
-    overflow-x: auto;
-  }
-
-  .top-nav-items {
-    padding: 0 var(--space-sm);
-  }
-
-  .sidebar {
+  .player-card-wrapper {
     display: none;
-  }
-
-  .score-overlay {
-    top: 80px;
-    left: var(--space-md);
-  }
-
-  .match-actions {
-    top: 80px;
-    right: var(--space-md);
-  }
-
-  .video-controls {
-    width: calc(100% - var(--space-xl) * 2);
-    padding: var(--space-sm) var(--space-md);
-  }
-
-  .pov-overlay {
-    left: var(--space-md);
-    right: var(--space-md);
-    bottom: var(--space-md);
-  }
-
-  .pov-container {
-    width: 100%;
   }
 }

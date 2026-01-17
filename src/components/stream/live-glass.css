@@ -1,0 +1,124 @@
+/* ═══════════════════════════════════════════════════════════════
+   LIVE BADGE - Liquid Glass Design
+   Premium floating live indicator with pulsing glow
+   ═══════════════════════════════════════════════════════════════ */
+
+.live-glass {
+  position: absolute;
+  top: 28px;
+  right: 28px;
+  border-radius: 14px;
+  overflow: hidden;
+  animation: liveAppear 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation-delay: 0.3s;
+  opacity: 0;
+}
+
+@keyframes liveAppear {
+  from {
+    opacity: 0;
+    transform: scale(0.8) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Glass background */
+.live-glass-bg {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.12) 0%,
+    rgba(255, 255, 255, 0.04) 100%
+  );
+  backdrop-filter: blur(30px) saturate(180%);
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
+}
+
+/* Glass surface */
+.live-glass-surface {
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: inherit;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+    0 1px 0 rgba(255, 255, 255, 0.15) inset,
+    0 8px 24px -8px rgba(0, 0, 0, 0.4);
+}
+
+/* Content */
+.live-glass-content {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+}
+
+/* Pulsing dot container */
+.live-glass-pulse {
+  position: relative;
+  width: 10px;
+  height: 10px;
+}
+
+/* Expanding ring */
+.live-glass-pulse-ring {
+  position: absolute;
+  inset: -4px;
+  border: 2px solid #FF3B30;
+  border-radius: 50%;
+  animation: liveRing 2s ease-out infinite;
+}
+
+@keyframes liveRing {
+  0% {
+    transform: scale(0.5);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+/* Core dot */
+.live-glass-pulse-dot {
+  position: absolute;
+  inset: 0;
+  background: #FF3B30;
+  border-radius: 50%;
+  box-shadow:
+    0 0 12px #FF3B30,
+    0 0 24px rgba(255, 59, 48, 0.5);
+  animation: liveDot 2s ease-in-out infinite;
+}
+
+@keyframes liveDot {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow:
+      0 0 12px #FF3B30,
+      0 0 24px rgba(255, 59, 48, 0.5);
+  }
+  50% {
+    transform: scale(1.15);
+    box-shadow:
+      0 0 16px #FF3B30,
+      0 0 32px rgba(255, 59, 48, 0.7);
+  }
+}
+
+/* Text */
+.live-glass-text {
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.95);
+  letter-spacing: 0.1em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}

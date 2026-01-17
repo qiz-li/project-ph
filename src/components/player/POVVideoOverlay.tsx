@@ -1,74 +1,91 @@
 import type { Player } from '../../types';
-import { IconButton } from '../shared/IconButton';
-import './styles.css';
+import './player-glass.css';
 
 interface POVVideoOverlayProps {
   player: Player;
   onClose: () => void;
-  position?: { x: number; y: number };
 }
 
-const CloseIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="18" y1="6" x2="6" y2="18" />
-    <line x1="6" y1="6" x2="18" y2="18" />
-  </svg>
-);
+export function POVVideoOverlay({ player, onClose }: POVVideoOverlayProps) {
+  const getStats = () => {
+    if (player.position === 'Goalkeeper') {
+      return [
+        { value: '1', label: 'Saves' },
+        { value: '87%', label: 'Save Rate' },
+        { value: '2.1', label: 'Distance' },
+      ];
+    }
+    if (player.position === 'Penalty Taker') {
+      return [
+        { value: `${player.stats.shotsOnTarget}`, label: 'Goals' },
+        { value: '100%', label: 'Accuracy' },
+        { value: '92', label: 'Power' },
+      ];
+    }
+    if (player.position === 'Referee') {
+      return [
+        { value: '8', label: 'Calls' },
+        { value: '2.1', label: 'KM Run' },
+        { value: '0', label: 'Cards' },
+      ];
+    }
+    return [
+      { value: '7.2', label: 'Rating' },
+      { value: `${player.stats.passes}`, label: 'Passes' },
+      { value: `${player.stats.distance}`, label: 'KM' },
+    ];
+  };
 
-export function POVVideoOverlay({ player, onClose, position }: POVVideoOverlayProps) {
-  const style = position
-    ? {
-        '--start-x': `${position.x}px`,
-        '--start-y': `${position.y}px`,
-      } as React.CSSProperties
-    : undefined;
+  const stats = getStats();
 
   return (
-    <div className="pov-overlay animate-scale-pop" style={style}>
-      <div className="pov-container glass-heavy glass-noise">
+    <div className="pov-glass">
+      <div className="pov-glass-container" style={{ '--player-accent': player.teamColor } as React.CSSProperties}>
+        {/* Glass layers */}
+        <div className="pov-glass-bg" />
+        <div className="pov-glass-surface" />
+        <div className="pov-glass-glow" />
+
+        {/* Header */}
         <div className="pov-header">
           <div className="pov-player-info">
             <div className="pov-avatar">
-              {player.avatar ? (
-                <img src={player.avatar} alt={player.name} />
-              ) : (
-                <span>{player.name.charAt(0)}</span>
-              )}
+              <span>{player.name.charAt(0)}</span>
             </div>
-            <div>
+            <div className="pov-details">
               <span className="pov-player-name">{player.name}</span>
-              <span className="pov-player-position">
-                #{player.number} · {player.position}
-              </span>
+              <span className="pov-player-position">{player.position}</span>
             </div>
           </div>
+
           <div className="pov-live-badge">
             <span className="pov-live-dot" />
-            <span>POV CAM</span>
+            <span className="pov-live-text">LIVE</span>
           </div>
-          <IconButton variant="glass" size="sm" onClick={onClose} title="Close">
-            <CloseIcon />
-          </IconButton>
+
+          <button className="pov-close" onClick={onClose} aria-label="Close">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </button>
         </div>
+
+        {/* Video */}
         <div className="pov-video">
           <div className="pov-video-placeholder">
             <div className="pov-video-grid" />
-            <span className="pov-video-text">Player Camera Feed</span>
+            <span className="pov-video-text">POV Camera Feed</span>
           </div>
         </div>
-        <div className="pov-stats glass">
-          <div className="pov-stat">
-            <span className="pov-stat-value">{player.stats.distance}</span>
-            <span className="pov-stat-label">km covered</span>
-          </div>
-          <div className="pov-stat">
-            <span className="pov-stat-value">{player.stats.speed}</span>
-            <span className="pov-stat-label">km/h top speed</span>
-          </div>
-          <div className="pov-stat">
-            <span className="pov-stat-value">{player.stats.sprints}</span>
-            <span className="pov-stat-label">sprints</span>
-          </div>
+
+        {/* Stats */}
+        <div className="pov-stats">
+          {stats.map((stat, index) => (
+            <div key={index} className="pov-stat">
+              <span className="pov-stat-value">{stat.value}</span>
+              <span className="pov-stat-label">{stat.label}</span>
+            </div>
+          ))}
         </div>
       </div>
     </div>

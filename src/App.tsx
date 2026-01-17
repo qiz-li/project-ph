@@ -1,45 +1,121 @@
 import { useState, useRef, useCallback } from 'react';
-import type { Player } from './types';
-import { TopNav } from './components/navigation/TopNav';
-import { Sidebar } from './components/navigation/Sidebar';
 import { StreamContainer } from './components/stream/StreamContainer';
 import type { StreamContainerRef } from './components/stream/StreamContainer';
-import { ScoreOverlay } from './components/stream/ScoreOverlay';
-import { MatchActions } from './components/stream/MatchActions';
-import { CommentaryOverlay } from './components/stream/CommentaryOverlay';
+import { PenaltyScoreOverlay } from './components/stream/PenaltyScoreOverlay';
+import { LiveBadge } from './components/stream/LiveBadge';
 import { VideoControls } from './components/stream/VideoControls';
 import { PlayerCard } from './components/player/PlayerCard';
-import { PlayerMarker } from './components/player/PlayerMarker';
 import { POVVideoOverlay } from './components/player/POVVideoOverlay';
-import { mockMatch, mockPlayers, mockCommentaries } from './data/mockData';
+import type { Player } from './types';
+import brunoVideo from './assets/bruno.mov';
 import './App.css';
 
+// Penalty shootout data - FA Cup 2024/25: Man United vs Arsenal
+const penaltyData = {
+  homeTeam: {
+    name: 'Manchester United',
+    shortName: 'MUN',
+    flag: '🔴',
+    color: '#DA291C',
+  },
+  awayTeam: {
+    name: 'Arsenal',
+    shortName: 'ARS',
+    flag: '🔴',
+    color: '#EF0107',
+  },
+  homePenalties: {
+    scored: 0,
+    taken: 0,
+    saved: 0,
+  },
+  awayPenalties: {
+    scored: 0,
+    taken: 0,
+    saved: 0,
+  },
+  currentRound: 1,
+  isHomeTurn: true,
+};
+
+// Penalty-specific players - FA Cup 2024/25: Bruno vs Raya (First penalty)
+const penaltyPlayers: Player[] = [
+  {
+    id: 'goalkeeper',
+    name: 'David Raya',
+    number: 22,
+    position: 'Goalkeeper',
+    team: 'away',
+    teamColor: '#EF0107',
+    avatar: '',
+    stats: {
+      passes: 0,
+      passAccuracy: 0,
+      shots: 0,
+      shotsOnTarget: 0,
+      tackles: 0,
+      distance: 0.2,
+      speed: 0,
+      sprints: 0,
+    },
+    fieldPosition: { x: 15, y: 50 },
+  },
+  {
+    id: 'penalty-taker',
+    name: 'Bruno Fernandes',
+    number: 8,
+    position: 'Penalty Taker',
+    team: 'home',
+    teamColor: '#DA291C',
+    avatar: '',
+    stats: {
+      passes: 0,
+      passAccuracy: 0,
+      shots: 1,
+      shotsOnTarget: 0,
+      tackles: 0,
+      distance: 0.1,
+      speed: 0,
+      sprints: 0,
+    },
+    fieldPosition: { x: 30, y: 50 },
+  },
+  {
+    id: 'referee',
+    name: 'A. Taylor',
+    number: 0,
+    position: 'Referee',
+    team: 'home',
+    teamColor: '#FFD700',
+    avatar: '',
+    stats: {
+      passes: 0,
+      passAccuracy: 0,
+      shots: 0,
+      shotsOnTarget: 0,
+      tackles: 0,
+      distance: 1.8,
+      speed: 11.2,
+      sprints: 2,
+    },
+    fieldPosition: { x: 50, y: 30 },
+  },
+];
+
+// Card positions on screen - positioned relative to players in video
+const cardPositions: Record<string, { top?: string; bottom?: string; left?: string; right?: string }> = {
+  'referee': { top: '120px', left: '24px' },
+  'penalty-taker': { bottom: '80px', left: '24px' },
+  'goalkeeper': { top: '180px', right: '24px' },
+};
+
 function App() {
-  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
-  const [activeMarkerId, setActiveMarkerId] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
 
   const streamRef = useRef<StreamContainerRef>(null);
-
-  const handlePlayerExpand = (player: Player) => {
-    setSelectedPlayer(player);
-    setActiveMarkerId(player.id);
-  };
-
-  const handleCloseOverlay = () => {
-    setSelectedPlayer(null);
-    setActiveMarkerId(null);
-  };
-
-  const handleMarkerClick = (player: Player) => {
-    if (activeMarkerId === player.id) {
-      handleCloseOverlay();
-    } else {
-      handlePlayerExpand(player);
-    }
-  };
 
   const handleTimeUpdate = useCallback((time: number, dur: number) => {
     setCurrentTime(time);
@@ -58,68 +134,48 @@ function App() {
     }
   };
 
-  const handleSeekForward = () => {
-    streamRef.current?.seekForward(10);
-  };
-
-  const handleSeekBackward = () => {
-    streamRef.current?.seekBackward(10);
-  };
-
   const handleSeek = (time: number) => {
     streamRef.current?.seekTo(time);
   };
 
   const handleFullscreen = () => {
-    if (document.fullscreenElement) {
-      document.exitFullscreen();
-    } else {
-      document.documentElement.requestFullscreen();
-    }
+    document.documentElement.requestFullscreen?.();
   };
 
-  // Position player cards around the field
-  const playerCardPositions: Record<string, { top: string; left?: string; right?: string }> = {
-    'player-001': { top: '20%', right: '100px' },
-    'player-002': { top: '45%', left: '100px' },
-    'player-003': { top: '15%', right: '280px' },
-    'player-004': { top: '60%', left: '100px' },
-    'player-005': { top: '55%', right: '100px' },
+  const handlePlayerExpand = (player: Player) => {
+    setSelectedPlayer(player);
+  };
+
+  const handleCloseOverlay = () => {
+    setSelectedPlayer(null);
   };
 
   return (
     <div className="app">
-      <TopNav />
-      <Sidebar />
-
       <StreamContainer
         ref={streamRef}
-        youtubeId="PQrekQOY-VY"
+        videoSrc={brunoVideo}
         onTimeUpdate={handleTimeUpdate}
         onStateChange={handleStateChange}
       >
-        <ScoreOverlay match={mockMatch} />
-        <MatchActions />
+        <PenaltyScoreOverlay
+          homeTeam={penaltyData.homeTeam}
+          awayTeam={penaltyData.awayTeam}
+          homePenalties={penaltyData.homePenalties}
+          awayPenalties={penaltyData.awayPenalties}
+          currentRound={penaltyData.currentRound}
+          isHomeTurn={penaltyData.isHomeTurn}
+        />
 
-        {/* Player Markers on Field */}
-        <div className="field-markers">
-          {mockPlayers.map((player) => (
-            <PlayerMarker
-              key={player.id}
-              player={player}
-              isActive={activeMarkerId === player.id}
-              onClick={() => handleMarkerClick(player)}
-            />
-          ))}
-        </div>
+        <LiveBadge />
 
-        {/* Player Cards */}
-        {mockPlayers.slice(0, 3).map((player, index) => (
+        {/* POV Player Cards */}
+        {penaltyPlayers.map((player, index) => (
           <div
             key={player.id}
             className="player-card-wrapper"
             style={{
-              ...playerCardPositions[player.id],
+              ...cardPositions[player.id],
               animationDelay: `${index * 100}ms`,
             }}
           >
@@ -130,14 +186,11 @@ function App() {
           </div>
         ))}
 
-        <CommentaryOverlay commentaries={mockCommentaries} />
         <VideoControls
           currentTime={currentTime}
           duration={duration}
           isPlaying={isPlaying}
           onPlayPause={handlePlayPause}
-          onSeekForward={handleSeekForward}
-          onSeekBackward={handleSeekBackward}
           onSeek={handleSeek}
           onFullscreen={handleFullscreen}
         />

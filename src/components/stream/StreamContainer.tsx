@@ -4,49 +4,18 @@ import './styles.css';
 
 declare global {
   interface Window {
-    YT: {
-      Player: new (
-        elementId: string,
-        config: {
-          videoId: string;
-          playerVars?: Record<string, number | string>;
-          events?: {
-            onReady?: (event: { target: YouTubePlayer }) => void;
-            onStateChange?: (event: { data: number }) => void;
-          };
-        }
-      ) => YouTubePlayer;
-      PlayerState: {
-        PLAYING: number;
-        PAUSED: number;
-        ENDED: number;
-      };
-    };
+    YT: typeof YT;
     onYouTubeIframeAPIReady: () => void;
   }
-}
-
-interface YouTubePlayer {
-  playVideo: () => void;
-  pauseVideo: () => void;
-  seekTo: (seconds: number, allowSeekAhead: boolean) => void;
-  getCurrentTime: () => number;
-  getDuration: () => number;
-  getPlayerState: () => number;
-  setVolume: (volume: number) => void;
-  mute: () => void;
-  unMute: () => void;
 }
 
 export interface StreamContainerRef {
   play: () => void;
   pause: () => void;
   seekTo: (seconds: number) => void;
-  seekForward: (seconds: number) => void;
-  seekBackward: (seconds: number) => void;
   getCurrentTime: () => number;
   getDuration: () => number;
-  isPlaying: () => boolean;
+  getPlayerState: () => number;
 }
 
 interface StreamContainerProps {
@@ -59,29 +28,76 @@ interface StreamContainerProps {
 
 export const StreamContainer = forwardRef<StreamContainerRef, StreamContainerProps>(
   ({ children, youtubeId, videoSrc, onTimeUpdate, onStateChange }, ref) => {
-    const playerRef = useRef<YouTubePlayer | null>(null);
+    const playerRef = useRef<YT.Player | null>(null);
+    const videoRef = useRef<HTMLVideoElement | null>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
     const intervalRef = useRef<number | null>(null);
 
     useImperativeHandle(ref, () => ({
-      play: () => playerRef.current?.playVideo(),
-      pause: () => playerRef.current?.pauseVideo(),
-      seekTo: (seconds: number) => playerRef.current?.seekTo(seconds, true),
-      seekForward: (seconds: number) => {
-        if (playerRef.current) {
-          const current = playerRef.current.getCurrentTime();
-          playerRef.current.seekTo(current + seconds, true);
+      play: () => {
+        if (videoSrc && videoRef.current) {
+          videoRef.current.play();
+        } else {
+          playerRef.current?.playVideo();
         }
       },
-      seekBackward: (seconds: number) => {
-        if (playerRef.current) {
-          const current = playerRef.current.getCurrentTime();
-          playerRef.current.seekTo(Math.max(0, current - seconds), true);
+      pause: () => {
+        if (videoSrc && videoRef.current) {
+          videoRef.current.pause();
+        } else {
+          playerRef.current?.pauseVideo();
         }
       },
-      getCurrentTime: () => playerRef.current?.getCurrentTime() ?? 0,
-      getDuration: () => playerRef.current?.getDuration() ?? 0,
-      isPlaying: () => playerRef.current?.getPlayerState() === window.YT?.PlayerState?.PLAYING,
+      seekTo: (seconds: number) => {
+        if (videoSrc && videoRef.current) {
+          videoRef.current.currentTime = seconds;
+        } else {
+          playerRef.current?.seekTo(seconds, true);
+        }
+      },
+      getCurrentTime: () => {
+        if (videoSrc && videoRef.current) {
+          return videoRef.current.currentTime;
+        }
+        return playerRef.current?.getCurrentTime() ?? 0;
+      },
+      getDuration: () => {
+        if (videoSrc && videoRef.current) {
+          return videoRef.current.duration;
+        }
+        return playerRef.current?.getDuration() ?? 0;
+      },
+      getPlayerState: () => {
+        if (videoSrc && videoRef.current) {
+          return videoRef.current.paused ? 2 : 1;
+        }
+        return playerRef.current?.getPlayerState() ?? -1;
+      },
     }));
+
+    // Handle native video element
+    useEffect(() => {
+      if (!videoSrc || !videoRef.current) return;
+
+      const video = videoRef.current;
+
+      const handleTimeUpdate = () => {
+        onTimeUpdate?.(video.currentTime, video.duration);
+      };
+
+      const handlePlay = () => onStateChange?.(true);
+      const handlePause = () => onStateChange?.(false);
+
+      video.addEventListener('timeupdate', handleTimeUpdate);
+      video.addEventListener('play', handlePlay);
+      video.addEventListener('pause', handlePause);
+
+      return () => {
+        video.removeEventListener('timeupdate', handleTimeUpdate);
+        video.removeEventListener('play', handlePlay);
+        video.removeEventListener('pause', handlePause);
+      };
+    }, [videoSrc, onTimeUpdate, onStateChange]);
 
     useEffect(() => {
       if (!youtubeId) return;
@@ -111,17 +127,15 @@ export const StreamContainer = forwardRef<StreamContainerRef, StreamContainerPro
               event.target.playVideo();
               // Start time update interval
               intervalRef.current = window.setInterval(() => {
-                if (playerRef.current && onTimeUpdate) {
+                if (playerRef.current) {
                   const currentTime = playerRef.current.getCurrentTime();
                   const duration = playerRef.current.getDuration();
-                  onTimeUpdate(currentTime, duration);
+                  onTimeUpdate?.(currentTime, duration);
                 }
-              }, 500);
+              }, 1000);
             },
             onStateChange: (event) => {
-              if (onStateChange) {
-                onStateChange(event.data === window.YT.PlayerState.PLAYING);
-              }
+              onStateChange?.(event.data === window.YT.PlayerState.PLAYING);
             },
           },
         });
@@ -136,18 +150,18 @@ export const StreamContainer = forwardRef<StreamContainerRef, StreamContainerPro
         if (intervalRef.current) {
           clearInterval(intervalRef.current);
         }
+        playerRef.current?.destroy();
       };
     }, [youtubeId, onTimeUpdate, onStateChange]);
 
     return (
-      <div className="stream-container">
+      <div className="stream-container" ref={containerRef}>
         <div className="stream-video-wrapper">
           {youtubeId ? (
-            <div className="youtube-container">
-              <div id="youtube-player" className="youtube-embed" />
-            </div>
+            <div id="youtube-player" className="stream-video youtube-embed" />
           ) : videoSrc ? (
             <video
+              ref={videoRef}
               className="stream-video"
               src={videoSrc}
               autoPlay
