@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ProcessingAnimation, ProcessingStatus } from '../components/processing/ProcessingAnimation';
+import { AccessibilityToggle } from '../components/shared/AccessibilityToggle';
 import '../components/processing/processing-glass.css';
 
 const statusMessages = [
@@ -12,31 +13,40 @@ const statusMessages = [
   'Stream ready',
 ];
 
+const DURATION = 30000; // 30 seconds total
+const STORAGE_KEY = 'processing_start_time';
+
 export function ProcessingPage() {
   const navigate = useNavigate();
   const { gameId } = useParams<{ gameId: string }>();
   const [progress, setProgress] = useState(0);
   const [messageIndex, setMessageIndex] = useState(0);
+  const startTimeRef = useRef<number>(0);
 
   useEffect(() => {
-    const duration = 4000; // 4 seconds total
-    const interval = 50; // Update every 50ms
-    const steps = duration / interval;
-    const progressPerStep = 100 / steps;
+    // Check if we have a stored start time, otherwise create one
+    const storedStartTime = sessionStorage.getItem(`${STORAGE_KEY}_${gameId}`);
+    if (storedStartTime) {
+      startTimeRef.current = parseInt(storedStartTime, 10);
+    } else {
+      startTimeRef.current = Date.now();
+      sessionStorage.setItem(`${STORAGE_KEY}_${gameId}`, startTimeRef.current.toString());
+    }
 
-    const progressInterval = setInterval(() => {
-      setProgress((prev) => {
-        const next = prev + progressPerStep;
-        if (next >= 100) {
-          clearInterval(progressInterval);
-          return 100;
-        }
-        return next;
-      });
-    }, interval);
+    const updateProgress = () => {
+      const elapsed = Date.now() - startTimeRef.current;
+      const newProgress = Math.min((elapsed / DURATION) * 100, 100);
+      setProgress(newProgress);
+    };
+
+    // Update immediately
+    updateProgress();
+
+    // Then update every 50ms
+    const progressInterval = setInterval(updateProgress, 50);
 
     return () => clearInterval(progressInterval);
-  }, []);
+  }, [gameId]);
 
   useEffect(() => {
     // Update message based on progress
@@ -55,6 +65,8 @@ export function ProcessingPage() {
     // Navigate to stream when complete
     if (progress >= 100) {
       const timeout = setTimeout(() => {
+        // Clear the stored start time
+        sessionStorage.removeItem(`${STORAGE_KEY}_${gameId}`);
         navigate(`/stream/${gameId}`);
       }, 500);
       return () => clearTimeout(timeout);
@@ -62,9 +74,9 @@ export function ProcessingPage() {
   }, [progress, navigate, gameId]);
 
   return (
-    <div className="processing-page">
+    <div className="processing-page" role="main" aria-label="Loading stream">
       {/* Full screen neural network background */}
-      <div className="processing-canvas-wrapper">
+      <div className="processing-canvas-wrapper" aria-hidden="true">
         <ProcessingAnimation />
       </div>
 
@@ -82,9 +94,11 @@ export function ProcessingPage() {
             message={statusMessages[messageIndex]}
           />
 
-          <p className="processing-hint">Preparing immersive experience</p>
+          <p className="processing-hint" aria-live="polite">Preparing immersive experience</p>
         </div>
       </div>
+
+      <AccessibilityToggle />
     </div>
   );
 }

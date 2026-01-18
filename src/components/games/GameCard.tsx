@@ -30,10 +30,27 @@ export function GameCard({ game }: GameCardProps) {
     navigate(`/processing/${game.id}`);
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleClick();
+    }
+  };
+
+  const statusLabel = game.status === 'live'
+    ? 'Live now'
+    : game.status === 'replay'
+      ? 'Replay available'
+      : `Starts at ${game.time}`;
+
   return (
-    <div
+    <article
       className="game-card"
       onClick={handleClick}
+      onKeyDown={handleKeyDown}
+      role="listitem"
+      tabIndex={0}
+      aria-label={`${game.homeTeam.name} versus ${game.awayTeam.name}, ${game.competition}. ${statusLabel}. Press Enter to watch.`}
     >
       <div className="game-card-content">
         {/* Teams - text only */}
@@ -42,7 +59,7 @@ export function GameCard({ game }: GameCardProps) {
             <span className="game-card-team-name">{game.homeTeam.name}</span>
           </div>
 
-          <div className="game-card-vs">
+          <div className="game-card-vs" aria-hidden="true">
             <span>v</span>
           </div>
 
@@ -54,8 +71,8 @@ export function GameCard({ game }: GameCardProps) {
         {/* Meta row */}
         <div className="game-card-footer">
           {game.status === 'live' ? (
-            <div className="game-card-live">
-              <span className="game-card-live-dot" />
+            <div className="game-card-live" aria-label="Live now">
+              <span className="game-card-live-dot" aria-hidden="true" />
               <span className="game-card-live-text">LIVE</span>
             </div>
           ) : game.status === 'replay' ? (
@@ -68,17 +85,17 @@ export function GameCard({ game }: GameCardProps) {
             </div>
           )}
 
-          <span className="game-card-sep" />
+          <span className="game-card-sep" aria-hidden="true" />
           <span className="game-card-comp-text">{game.competition}</span>
         </div>
       </div>
 
       {/* Arrow indicator */}
-      <div className="game-card-arrow">
+      <div className="game-card-arrow" aria-hidden="true">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
           <path d="M5 12h14M12 5l7 7-7 7" />
         </svg>
       </div>
-    </div>
+    </article>
   );
 }

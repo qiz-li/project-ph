@@ -9,6 +9,8 @@ import { PlayerCard } from '../components/player/PlayerCard';
 import { POVVideoOverlay } from '../components/player/POVVideoOverlay';
 import { usePlayerTracking } from '../hooks/usePlayerTracking';
 import { GoalConfetti } from '../components/stream/GoalConfetti';
+import { AccessibilityToggle } from '../components/shared/AccessibilityToggle';
+import { useAccessibility } from '../contexts/AccessibilityContext';
 import type { Player } from '../types';
 import brunoVideo from '../assets/bruno.mov';
 import '../App.css';
@@ -143,12 +145,13 @@ const CARD_HEIGHT = 160;
 
 export function StreamPage() {
   const navigate = useNavigate();
+  const { announce } = useAccessibility();
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
-  const [showPOVCards, setShowPOVCards] = useState(true);
+  const [showPOVCards, setShowPOVCards] = useState(false);
   const [penaltyData, setPenaltyData] = useState(initialPenaltyData);
   const [goalScored, setGoalScored] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
@@ -189,6 +192,8 @@ export function StreamPage() {
         },
         isHomeTurn: false,
       }));
+      // Announce goal for screen readers
+      announce('Goal! Bruno Fernandes scores for Manchester United!', 'assertive');
       // Auto-hide confetti after animation
       setTimeout(() => setShowConfetti(false), 4000);
     }
@@ -198,7 +203,7 @@ export function StreamPage() {
       setShowConfetti(false);
       setPenaltyData(initialPenaltyData);
     }
-  }, [currentTime, goalScored]);
+  }, [currentTime, goalScored, announce]);
 
   // Calculate card positions from tracking data
   const getCardPosition = (playerId: string) => {
@@ -347,6 +352,8 @@ export function StreamPage() {
           isMainPlaying={isPlaying}
         />
       )}
+
+      <AccessibilityToggle />
     </div>
   );
 }

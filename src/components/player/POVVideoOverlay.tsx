@@ -2,6 +2,9 @@ import { useRef, useEffect } from 'react';
 import type { Player } from '../../types';
 import brunoPov from '../../assets/bruno_pov.mov';
 import assRefPov from '../../assets/ass_ref_pov.mov';
+import goaliePov from '../../assets/goalie_pov.mov';
+import goalieUpper from '../../assets/goalie_upper.mov';
+import refPov from '../../assets/ref_pov.mov';
 import './player-glass.css';
 
 interface POVVideoOverlayProps {
@@ -15,6 +18,8 @@ interface POVVideoOverlayProps {
 const POV_CONFIG = {
   'Penalty Taker': { startTime: 6.5, duration: 1, endTime: 7.5 },
   'Assistant Referee': { startTime: 6, duration: 2, endTime: 8 },
+  'Goalkeeper': { switchTime: 5, startTime: 6, duration: 1.7, endTime: 7.7 },
+  'Referee': { startTime: 5.5, duration: 10, endTime: 15.5 },
 };
 
 export function POVVideoOverlay({ player, onClose, mainVideoTime, isMainPlaying }: POVVideoOverlayProps) {
@@ -59,8 +64,15 @@ export function POVVideoOverlay({ player, onClose, mainVideoTime, isMainPlaying 
 
   const isPenaltyTaker = player.position === 'Penalty Taker';
   const isAssistantRef = player.position === 'Assistant Referee';
-  const hasPov = isPenaltyTaker || isAssistantRef;
-  const povSrc = isPenaltyTaker ? brunoPov : isAssistantRef ? assRefPov : null;
+  const isGoalkeeper = player.position === 'Goalkeeper';
+  const isReferee = player.position === 'Referee';
+  const hasPov = isPenaltyTaker || isAssistantRef || isGoalkeeper || isReferee;
+  const povSrc = isPenaltyTaker ? brunoPov : isAssistantRef ? assRefPov : isGoalkeeper ? goaliePov : isReferee ? refPov : null;
+
+  // For goalkeeper, show looping upper video before switch time
+  const config = POV_CONFIG[player.position as keyof typeof POV_CONFIG];
+  const switchTime = config && 'switchTime' in config ? config.switchTime : config?.startTime;
+  const showGoalieLoop = isGoalkeeper && switchTime !== undefined && mainVideoTime < switchTime;
 
   // Sync POV video with main video time
   useEffect(() => {
@@ -133,13 +145,27 @@ export function POVVideoOverlay({ player, onClose, mainVideoTime, isMainPlaying 
         {/* Video */}
         <div className="pov-video">
           {hasPov && povSrc ? (
-            <video
-              ref={videoRef}
-              src={povSrc}
-              muted
-              playsInline
-              className={`pov-video-player ${isAssistantRef ? 'pov-video-player--crop-top' : ''}`}
-            />
+            <>
+              {isGoalkeeper && (
+                <video
+                  src={goalieUpper}
+                  muted
+                  playsInline
+                  autoPlay
+                  loop
+                  className="pov-video-player"
+                  style={{ display: showGoalieLoop ? 'block' : 'none' }}
+                />
+              )}
+              <video
+                ref={videoRef}
+                src={povSrc}
+                muted
+                playsInline
+                className={`pov-video-player ${isAssistantRef ? 'pov-video-player--crop-top' : ''}`}
+                style={isGoalkeeper ? { display: showGoalieLoop ? 'none' : 'block' } : undefined}
+              />
+            </>
           ) : (
             <div className="pov-video-placeholder">
               <div className="pov-video-grid" />

@@ -1,4 +1,5 @@
 import { GameCard, type Game } from '../components/games/GameCard';
+import { AccessibilityToggle } from '../components/shared/AccessibilityToggle';
 import '../components/games/games-glass.css';
 
 // Sample games data
@@ -112,27 +113,37 @@ export function GamesPage() {
 
   return (
     <div className="games-page">
-      <header className="games-header">
+      {/* Skip link for keyboard navigation */}
+      <a href="#main-content" className="skip-link">
+        Skip to main content
+      </a>
+
+      <header className="games-header" role="banner">
         <div className="games-brand">
-          <span className="games-logo">ph</span>
+          <span className="games-logo" aria-hidden="true">ph</span>
           <h1 className="games-brand-title">Project Horizon</h1>
         </div>
         <p className="games-tagline">See the game through<br />the eyes of those who play it</p>
 
         {liveCount > 0 && (
-          <div className="games-header-live">
-            <span className="games-header-live-dot" />
+          <div className="games-header-live" role="status" aria-live="polite">
+            <span className="games-header-live-dot" aria-hidden="true" />
             <span className="games-header-live-text">Live now</span>
             <span className="games-header-live-count">/ {liveCount} matches</span>
           </div>
         )}
       </header>
 
-      <div className="games-grid">
-        {games.map((game) => (
-          <GameCard key={game.id} game={game} />
-        ))}
-      </div>
+      <main id="main-content" role="main">
+        <h2 className="sr-only">Available Matches</h2>
+        <div className="games-grid" role="list" aria-label="Football matches">
+          {games.map((game) => (
+            <GameCard key={game.id} game={game} />
+          ))}
+        </div>
+      </main>
+
+      <AccessibilityToggle />
     </div>
   );
 }
