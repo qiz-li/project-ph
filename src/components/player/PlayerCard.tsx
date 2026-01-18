@@ -1,26 +1,76 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import type { Player } from '../../types';
+import brunoPov from '../../assets/bruno_pov.mov';
+import assRefPov from '../../assets/ass_ref_pov.mov';
 import './player-glass.css';
 
 interface PlayerCardProps {
   player: Player;
   onExpand?: (player: Player) => void;
+  mainVideoTime?: number;
+  isMainPlaying?: boolean;
 }
 
-export function PlayerCard({ player, onExpand }: PlayerCardProps) {
+// POV video sync config
+const POV_CONFIG = {
+  'Penalty Taker': { startTime: 6.5, duration: 1, endTime: 7.5 },
+  'Assistant Referee': { startTime: 6, duration: 2, endTime: 8 },
+};
+
+export function PlayerCard({ player, onExpand, mainVideoTime = 0, isMainPlaying = false }: PlayerCardProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  const isPenaltyTaker = player.position === 'Penalty Taker';
+  const isAssistantRef = player.position === 'Assistant Referee';
+  const hasPov = isPenaltyTaker || isAssistantRef;
+  const povSrc = isPenaltyTaker ? brunoPov : isAssistantRef ? assRefPov : null;
+
+  // Sync POV preview with main video time
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !hasPov) return;
+
+    const config = POV_CONFIG[player.position as keyof typeof POV_CONFIG];
+    if (!config) return;
+
+    const { startTime, duration, endTime } = config;
+
+    if (mainVideoTime >= startTime && mainVideoTime < endTime) {
+      const povTime = mainVideoTime - startTime;
+      const clampedTime = Math.min(Math.max(povTime, 0), duration);
+
+      if (Math.abs(video.currentTime - clampedTime) > 0.1) {
+        video.currentTime = clampedTime;
+      }
+
+      if (isMainPlaying && video.paused) {
+        video.play().catch(() => {});
+      } else if (!isMainPlaying && !video.paused) {
+        video.pause();
+      }
+    } else if (mainVideoTime < startTime) {
+      video.currentTime = 0;
+      video.pause();
+    } else {
+      video.currentTime = duration;
+      video.pause();
+    }
+  }, [mainVideoTime, isMainPlaying, hasPov, player.position]);
 
   const getRoleLabel = () => {
     if (player.position === 'Goalkeeper') return 'GK';
     if (player.position === 'Penalty Taker') return 'PK';
     if (player.position === 'Referee') return 'REF';
+    if (player.position === 'Assistant Referee') return 'AR';
     return player.position.slice(0, 3).toUpperCase();
   };
 
   const getStatValue = () => {
-    if (player.position === 'Goalkeeper') return { label: 'SAVES', value: '0' };
-    if (player.position === 'Penalty Taker') return { label: 'GOALS', value: `${player.stats.shotsOnTarget}` };
-    if (player.position === 'Referee') return { label: 'CALLS', value: '8' };
+    if (player.position === 'Goalkeeper') return { label: 'SAVE %', value: `${player.stats.passes}%` };
+    if (player.position === 'Penalty Taker') return { label: 'CONV %', value: `${player.stats.passes}%` };
+    if (player.position === 'Referee') return { label: 'CALLS', value: `${player.stats.sprints}` };
+    if (player.position === 'Assistant Referee') return { label: 'MATCHES', value: `${player.stats.sprints}` };
     return { label: 'RATING', value: '7.2' };
   };
 
@@ -43,10 +93,20 @@ export function PlayerCard({ player, onExpand }: PlayerCardProps) {
       <div className="player-card-content">
         {/* POV Video Preview */}
         <div className="player-card-pov">
-          <div className="player-card-pov-bg">
-            <div className="player-card-pov-grid" />
-            <span className="player-card-pov-text">POV</span>
-          </div>
+          {hasPov && povSrc ? (
+            <video
+              ref={videoRef}
+              src={povSrc}
+              muted
+              playsInline
+              className={`player-card-pov-video ${isAssistantRef ? 'player-card-pov-video--crop-top' : ''}`}
+            />
+          ) : (
+            <div className="player-card-pov-bg">
+              <div className="player-card-pov-grid" />
+              <span className="player-card-pov-text">POV</span>
+            </div>
+          )}
           <div className="player-card-pov-live">
             <span className="player-card-pov-dot" />
             <span>LIVE</span>

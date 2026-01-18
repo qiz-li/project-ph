@@ -5,8 +5,8 @@ from pathlib import Path
 import cv2
 from ultralytics import YOLO
 
-VIDEO_PATH = "bruno.mov"
-OUT_JSON = "bruno_tracks.json"
+VIDEO_PATH = "../src/assets/bruno.mov"
+OUT_JSON = "../public/bruno_tracks.json"
 
 # Use a fast model first; upgrade later if needed
 MODEL_NAME = "yolov8n.pt"  # or yolov8s.pt for better accuracy

@@ -1,12 +1,24 @@
+import { useRef, useEffect } from 'react';
 import type { Player } from '../../types';
+import brunoPov from '../../assets/bruno_pov.mov';
+import assRefPov from '../../assets/ass_ref_pov.mov';
 import './player-glass.css';
 
 interface POVVideoOverlayProps {
   player: Player;
   onClose: () => void;
+  mainVideoTime: number;
+  isMainPlaying: boolean;
 }
 
-export function POVVideoOverlay({ player, onClose }: POVVideoOverlayProps) {
+// POV video sync config
+const POV_CONFIG = {
+  'Penalty Taker': { startTime: 6.5, duration: 1, endTime: 7.5 },
+  'Assistant Referee': { startTime: 6, duration: 2, endTime: 8 },
+};
+
+export function POVVideoOverlay({ player, onClose, mainVideoTime, isMainPlaying }: POVVideoOverlayProps) {
+  const videoRef = useRef<HTMLVideoElement>(null);
   const getStats = () => {
     if (player.position === 'Goalkeeper') {
       return [
@@ -17,16 +29,23 @@ export function POVVideoOverlay({ player, onClose }: POVVideoOverlayProps) {
     }
     if (player.position === 'Penalty Taker') {
       return [
-        { value: `${player.stats.shotsOnTarget}`, label: 'Goals' },
-        { value: '100%', label: 'Accuracy' },
-        { value: '92', label: 'Power' },
+        { value: `${player.stats.passes}%`, label: 'Conv Rate' },
+        { value: '118', label: 'km/h' },
+        { value: '0.9', label: 'xG' },
       ];
     }
     if (player.position === 'Referee') {
       return [
-        { value: '8', label: 'Calls' },
+        { value: `${player.stats.sprints}`, label: 'Calls' },
         { value: '2.1', label: 'KM Run' },
         { value: '0', label: 'Cards' },
+      ];
+    }
+    if (player.position === 'Assistant Referee') {
+      return [
+        { value: `${player.stats.sprints}`, label: 'Flags' },
+        { value: '1.2', label: 'KM Run' },
+        { value: '156', label: 'Matches' },
       ];
     }
     return [
@@ -37,6 +56,47 @@ export function POVVideoOverlay({ player, onClose }: POVVideoOverlayProps) {
   };
 
   const stats = getStats();
+
+  const isPenaltyTaker = player.position === 'Penalty Taker';
+  const isAssistantRef = player.position === 'Assistant Referee';
+  const hasPov = isPenaltyTaker || isAssistantRef;
+  const povSrc = isPenaltyTaker ? brunoPov : isAssistantRef ? assRefPov : null;
+
+  // Sync POV video with main video time
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !hasPov) return;
+
+    const config = POV_CONFIG[player.position as keyof typeof POV_CONFIG];
+    if (!config) return;
+
+    const { startTime, duration, endTime } = config;
+
+    if (mainVideoTime >= startTime && mainVideoTime < endTime) {
+      // During the POV window, play synced
+      const povTime = mainVideoTime - startTime;
+      const clampedTime = Math.min(Math.max(povTime, 0), duration);
+
+      // Only seek if significantly out of sync
+      if (Math.abs(video.currentTime - clampedTime) > 0.1) {
+        video.currentTime = clampedTime;
+      }
+
+      if (isMainPlaying && video.paused) {
+        video.play().catch(() => {});
+      } else if (!isMainPlaying && !video.paused) {
+        video.pause();
+      }
+    } else if (mainVideoTime < startTime) {
+      // Before POV window - show first frame
+      video.currentTime = 0;
+      video.pause();
+    } else {
+      // After POV window - show last frame
+      video.currentTime = duration;
+      video.pause();
+    }
+  }, [mainVideoTime, isMainPlaying, hasPov, player.position]);
 
   return (
     <div className="pov-glass">
@@ -72,10 +132,20 @@ export function POVVideoOverlay({ player, onClose }: POVVideoOverlayProps) {
 
         {/* Video */}
         <div className="pov-video">
-          <div className="pov-video-placeholder">
-            <div className="pov-video-grid" />
-            <span className="pov-video-text">POV Camera Feed</span>
-          </div>
+          {hasPov && povSrc ? (
+            <video
+              ref={videoRef}
+              src={povSrc}
+              muted
+              playsInline
+              className={`pov-video-player ${isAssistantRef ? 'pov-video-player--crop-top' : ''}`}
+            />
+          ) : (
+            <div className="pov-video-placeholder">
+              <div className="pov-video-grid" />
+              <span className="pov-video-text">POV Camera Feed</span>
+            </div>
+          )}
         </div>
 
         {/* Stats */}

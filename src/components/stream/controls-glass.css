@@ -1,22 +1,25 @@
 /* ═══════════════════════════════════════════════════════════════
-   VIDEO CONTROLS - Liquid Glass Design
-   Premium floating control bar with organic glass aesthetics
+   VIDEO CONTROLS - Minimal Design
+   Refined floating control bar
    ═══════════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@300;400;500&display=swap');
 
 .controls-glass {
   position: absolute;
-  bottom: 150px;
+  bottom: 48px;
   left: 50%;
   transform: translateX(-50%);
-  border-radius: 20px;
+  border-radius: 12px;
   overflow: hidden;
-  animation: controlsSlideIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: controlsSlideIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 0;
 }
 
 @keyframes controlsSlideIn {
   from {
     opacity: 0;
-    transform: translateX(-50%) translateY(20px);
+    transform: translateX(-50%) translateY(16px);
   }
   to {
     opacity: 1;
@@ -28,13 +31,9 @@
 .controls-glass-bg {
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    135deg,
-    rgba(0, 0, 0, 0.85) 0%,
-    rgba(0, 0, 0, 0.75) 100%
-  );
-  backdrop-filter: blur(40px) saturate(150%);
-  -webkit-backdrop-filter: blur(40px) saturate(150%);
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
 }
 
 /* Glass surface with borders */
@@ -43,26 +42,11 @@
   inset: 0;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: inherit;
-  box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.03) inset,
-    0 8px 32px rgba(0, 0, 0, 0.5);
 }
 
-/* Top highlight */
+/* Top highlight - hidden for minimal look */
 .controls-glass-highlight {
-  position: absolute;
-  top: 0;
-  left: 15%;
-  right: 15%;
-  height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.15) 30%,
-    rgba(255, 255, 255, 0.2) 50%,
-    rgba(255, 255, 255, 0.15) 70%,
-    transparent 100%
-  );
+  display: none;
 }
 
 /* Content layout */
@@ -71,8 +55,8 @@
   display: flex;
   align-items: center;
   gap: 20px;
-  padding: 12px 20px;
-  min-width: 580px;
+  padding: 14px 24px;
+  min-width: 520px;
 }
 
 /* Playback controls */
@@ -90,45 +74,36 @@
   justify-content: center;
   border: none;
   background: transparent;
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 0.6);
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .controls-btn svg {
   position: relative;
-  transition: transform 0.2s ease;
+  transition: all 0.3s ease;
 }
 
 /* Skip buttons (rewind/forward) */
 .controls-btn--skip {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
 }
 
 .controls-btn--skip svg {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
 }
 
 .controls-btn--skip:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 1);
+  color: rgba(255, 255, 255, 0.95);
 }
 
-.controls-btn--skip:hover svg {
-  transform: scale(1.1);
-}
-
-.controls-btn--skip:active svg {
-  transform: scale(0.95);
-}
-
-/* Play/Pause button - larger with glass bg */
+/* Play/Pause button */
 .controls-btn--play {
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   overflow: hidden;
 }
@@ -136,36 +111,25 @@
 .controls-btn-bg {
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.12) 0%,
-    rgba(255, 255, 255, 0.06) 100%
-  );
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: inherit;
   transition: all 0.3s ease;
 }
 
 .controls-btn--play svg {
-  width: 20px;
-  height: 20px;
+  width: 16px;
+  height: 16px;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .controls-btn--play:hover .controls-btn-bg {
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.18) 0%,
-    rgba(255, 255, 255, 0.1) 100%
-  );
+  background: rgba(255, 255, 255, 0.12);
   border-color: rgba(255, 255, 255, 0.2);
 }
 
 .controls-btn--play:hover svg {
-  transform: scale(1.1);
-}
-
-.controls-btn--play:active {
-  transform: scale(0.95);
+  color: #ffffff;
 }
 
 /* Progress section */
@@ -177,23 +141,23 @@
 }
 
 .controls-time {
-  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif;
-  font-size: 12px;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.9);
+  font-family: 'Geist Mono', monospace;
+  font-size: 11px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.7);
   font-variant-numeric: tabular-nums;
-  min-width: 42px;
+  min-width: 40px;
   text-align: center;
 }
 
 .controls-time--dim {
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.4);
 }
 
 /* Progress bar */
 .controls-progress {
   flex: 1;
-  height: 28px;
+  height: 24px;
   display: flex;
   align-items: center;
   cursor: pointer;
@@ -203,10 +167,11 @@
 .controls-progress-track {
   position: relative;
   width: 100%;
-  height: 4px;
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 4px;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 1px;
   overflow: visible;
+  transition: height 0.2s ease;
 }
 
 .controls-progress-fill {
@@ -214,28 +179,21 @@
   left: 0;
   top: 0;
   height: 100%;
-  background: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0.95) 0%,
-    rgba(255, 255, 255, 0.8) 100%
-  );
-  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 1px;
   transition: width 0.1s linear;
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
 }
 
 .controls-progress-handle {
   position: absolute;
   top: 50%;
-  width: 14px;
-  height: 14px;
+  width: 10px;
+  height: 10px;
   transform: translate(-50%, -50%) scale(0);
-  background: white;
+  background: #ffffff;
   border-radius: 50%;
-  box-shadow:
-    0 2px 8px rgba(0, 0, 0, 0.3),
-    0 0 0 2px rgba(255, 255, 255, 0.2);
-  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.5);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .controls-progress:hover .controls-progress-handle {
@@ -243,7 +201,7 @@
 }
 
 .controls-progress:hover .controls-progress-track {
-  height: 6px;
+  height: 3px;
 }
 
 /* Action buttons */
@@ -254,21 +212,16 @@
 }
 
 .controls-btn--action {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
 }
 
 .controls-btn--action svg {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
 }
 
 .controls-btn--action:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 1);
-}
-
-.controls-btn--action:hover svg {
-  transform: scale(1.1);
+  color: rgba(255, 255, 255, 0.95);
 }

@@ -25,3 +25,8 @@ dist-ssr
 
 *.env
 *.mov
+
+venv/
+
+# ML model weights
+*.pt
