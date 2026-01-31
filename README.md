@@ -10,7 +10,7 @@
   <em>You can be anyone.</em>
   <br />
 
-  <a href="https://devpost.com/software/project-horizon-8iodp2?ref_content=user-portfolio&ref_feature=in_progress">
-    Devpost
+  <a href="https://youtu.be/Wcb6SSw7LFY">
+    Demo
   </a>
 </div>
